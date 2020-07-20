@@ -4,21 +4,25 @@ import axios from "axios";
 import "./App.css";
 import { sample, shuffle, find } from "lodash";
 
-const fallacies = [
-  { fallacyId: 1, name: "ad hominem" },
-  { fallacyId: 2, name: "appeal to authority" },
-  { fallacyId: 3, name: "appeal to ignorance" },
-  { fallacyId: 4, name: "loaded question" },
-  { fallacyId: 5, name: "personal incredulity" },
-];
+const fallacies = {
+  AD_HOMINEM: "Ad hominem",
+  APPEAL_TO_AUTHORITY: "Appeal to authority",
+  APPEAL_TO_IGNORANCE: "Appeal to ignorance",
+  LOADED_QUESTION: "Loaded question",
+  PERSONAL_INCREDULITY: "Personal incredulity",
+  STRAWMAN: "Strawman",
+  FALSE_CAUSE: "False cause",
+  APPEAL_TO_EMOTION: "Appeal to emotion",
+};
 
 interface Fallacy {
-  fallacyId: number;
+  fallacy: number;
   id: number;
 }
 
 export default class App extends React.Component {
   state = {
+    score: 0,
     view: "question",
     isLoading: true,
     fallacy: null,
@@ -44,21 +48,21 @@ export default class App extends React.Component {
     let incorrectAnswers = [];
 
     while (incorrectAnswers.length < 3) {
-      const randomFallocy = sample(fallacies);
-      if (randomFallocy.fallacyId === response.data.fallacyId) continue;
-      incorrectAnswers.push(randomFallocy);
+      const randomFallacy = sample(Object.keys(fallacies));
+      if (
+        randomFallacy === response.data.fallacy ||
+        incorrectAnswers.includes(randomFallacy)
+      )
+        continue;
+      incorrectAnswers.push(randomFallacy);
     }
 
-    const correctAnswer = find(fallacies, {
-      fallacyId: parseInt(response.data.fallacyId, 10),
-    });
-
-    if (!correctAnswer) {
+    if (!fallacies[response.data.fallacy]) {
       console.log("Can't find correct answer.");
     }
 
-    const answers = shuffle([...incorrectAnswers, correctAnswer]);
-    console.log(answers);
+    const answers = shuffle([...incorrectAnswers, response.data.fallacy]);
+    console.log(answers, response.data.fallacy);
     this.setState({ isLoading: false, answers });
   };
 
@@ -75,7 +79,10 @@ export default class App extends React.Component {
   };
 
   handleCheckAnswer = (option: string) => {
-    if (option === "a") {
+    if (option === this.state.fallacy.fallacy) {
+      this.setState({
+        score: this.state.score + 1,
+      });
       this.showCorrectView();
     } else {
       this.showIncorrectView();
@@ -84,13 +91,6 @@ export default class App extends React.Component {
     setTimeout(() => {
       this.fetchImage();
     }, 1000);
-  };
-
-  toTitleCase = (str) => {
-    if (!str) return str;
-    return str.replace(/\w\S*/g, function (txt) {
-      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    });
   };
 
   render() {
@@ -105,7 +105,9 @@ export default class App extends React.Component {
         <div className="header-container">
           <div className="row">
             <div className="col">
-              <header className="App-header">Logical Fallacy Game</header>
+              <header className="App-header">
+                Logical Fallacy Game {this.state.score}
+              </header>
             </div>
           </div>
         </div>
@@ -119,44 +121,36 @@ export default class App extends React.Component {
           <div className="row mb-3">
             <div className="col-xs-6 col-sm-6 col-md-6">
               <button
-                onClick={() =>
-                  this.handleCheckAnswer(this.state.answers[0]?.id)
-                }
+                onClick={() => this.handleCheckAnswer(this.state.answers[0])}
                 className="btn btn-primary btn-lg btn-block"
               >
-                A: {this.toTitleCase(this.state.answers[0]?.name)}
+                A: {fallacies[this.state.answers[0]]}
               </button>
             </div>
             <div className="col-xs-6 col-sm-6 col-md-6">
               <button
-                onClick={() =>
-                  this.handleCheckAnswer(this.state.answers[1]?.id)
-                }
+                onClick={() => this.handleCheckAnswer(this.state.answers[1])}
                 className="btn btn-primary btn-lg btn-block"
               >
-                B: {this.toTitleCase(this.state.answers[1]?.name)}
+                B: {fallacies[this.state.answers[1]]}
               </button>
             </div>
           </div>
           <div className="row">
             <div className="col-xs-6 col-sm-6 col-md-6">
               <button
-                onClick={() =>
-                  this.handleCheckAnswer(this.state.answers[2]?.id)
-                }
+                onClick={() => this.handleCheckAnswer(this.state.answers[2])}
                 className="btn btn-primary btn-lg btn-block"
               >
-                C: {this.toTitleCase(this.state.answers[2]?.name)}
+                C: {fallacies[this.state.answers[2]]}
               </button>
             </div>
             <div className="col-xs-6 col-sm-6 col-md-6">
               <button
-                onClick={() =>
-                  this.handleCheckAnswer(this.state.answers[3]?.id)
-                }
+                onClick={() => this.handleCheckAnswer(this.state.answers[3])}
                 className="btn btn-primary btn-lg btn-block"
               >
-                D: {this.toTitleCase(this.state.answers[3]?.name)}
+                D: {fallacies[this.state.answers[3]]}
               </button>
             </div>
           </div>
